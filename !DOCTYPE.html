@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>给老婆的提醒</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            secondary: '#10B981',
+            heart: '#EF4444',
+            orange: '#F97316',
+            purple: '#8B5CF6',
+            pink: '#EC4899', // 新增粉红色
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .transition-page {
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      .page-enter {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      .page-enter-active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .page-exit {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .page-exit-active {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      .heart {
+        position: absolute;
+        animation: fall linear forwards;
+        pointer-events: none;
+      }
+      @keyframes fall {
+        to {
+          transform: translateY(100vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.8s ease forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .btn-pulse {
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      .popup-enter {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      .popup-enter-active {
+        opacity: 1;
+        transform: scale(1);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .popup-exit {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .popup-exit-active {
+        opacity: 0;
+        transform: scale(0.8);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .final-popup {
+        max-width: 500px; /* 大弹窗宽度 */
+        padding: 2rem; /* 增加内边距 */
+      }
+      .final-popup-text {
+        font-size: 2rem; /* 大弹窗文字大小 */
+        line-height: 1.5;
+      }
+      .final-popup-btn {
+        font-size: 1.25rem; /* 大弹窗按钮文字大小 */
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans overflow-x-hidden">
+  <!-- 第一个界面：提醒页面 -->
+  <div id="firstPage" class="relative flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white">
+    <!-- 爱心会通过JS动态添加到这里 -->
+    
+    <div class="text-center max-w-md w-full mx-4 z-10">
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-8">
+        <i class="fa fa-bell text-3xl"></i>
+      </div>
+      <h2 class="text-[clamp(1.5rem,6vw,2.5rem)] font-bold text-gray-800 mb-12">给老婆的提醒<br>(一定要执行😡)</h2>
+      
+      <button id="confirmBtn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-4 px-6 rounded-lg transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-primary/50 text-lg">
+        本泡认可上述话语并执行后续页面及弹窗内容
+      </button>
+    </div>
+  </div>
+  
+  <!-- 第二个界面 -->
+  <div id="secondPage" class="hidden min-h-screen p-4 flex flex-col items-center justify-center bg-gradient-to-b from-pink-50 to-white">
+    <div class="text-center max-w-2xl mx-auto">
+      <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-heart/10 text-heart mb-8">
+        <i class="fa fa-heart text-4xl"></i>
+      </div>
+      <h2 class="text-[clamp(1.8rem,6vw,3rem)] font-bold text-gray-800 mb-10">好好亲了吗就看😒</h2>
+      <button id="backBtn" class="w-full bg-heart hover:bg-heart/90 text-white font-medium py-4 px-8 rounded-lg transition-all duration-300 text-lg transform hover:translate-y-[-2px] hover:shadow-lg active:translate-y-0">
+        现在回去亲
+      </button>
+    </div>
+  </div>
+
+  <!-- 第三个界面 -->
+  <div id="thirdPage" class="hidden min-h-screen p-4 flex flex-col items-center justify-center bg-gradient-to-b from-orange-50 to-white">
+    <div class="text-center max-w-2xl mx-auto">
+      <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-orange/10 text-orange mb-8">
+        <i class="fa fa-star text-4xl"></i>
+      </div>
+      <h2 class="text-[clamp(1.8rem,6vw,3rem)] font-bold text-gray-800 mb-6">太棒啦！🥳</h2>
+      <p class="text-gray-600 mb-10 text-xl">这才是听话的好宝宝~</p>
+      <button id="finalBtn" class="w-full bg-orange hover:bg-orange/90 text-white font-medium py-4 px-8 rounded-lg transition-all duration-300 text-lg transform hover:translate-y-[-2px] hover:shadow-lg active:translate-y-0">
+        本泡会好好听亲爱的橘宝的话的🥺
+      </button>
+    </div>
+  </div>
+
+  <!-- 第四个界面 -->
+  <div id="fourthPage" class="hidden min-h-screen p-4 flex flex-col items-center justify-center bg-gradient-to-b from-purple-50 to-white relative">
+    <div class="text-center max-w-2xl mx-auto z-10">
+      <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-purple/10 text-purple mb-8">
+        <i class="fa fa-heartbeat text-4xl"></i>
+      </div>
+      <h2 class="text-[clamp(1.8rem,6vw,3rem)] font-bold text-gray-800 mb-6">最后的小惊喜 💖</h2>
+      <p class="text-gray-600 mb-10 text-xl">点击下方按钮接收专属关心~</p>
+      <button id="surpriseBtn" class="w-full bg-purple hover:bg-purple/90 text-white font-medium py-4 px-8 rounded-lg transition-all duration-300 text-lg transform hover:translate-y-[-2px] hover:shadow-lg active:translate-y-0 btn-pulse">
+        接收关心
+      </button>
+    </div>
+  </div>
+
+  <!-- 弹窗模板 -->
+  <template id="popupTemplate">
+    <div class="care-popup fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 transition-opacity duration-300">
+      <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 popup-enter relative">
+        <!-- 左上角标题 -->
+        <div class="absolute top-4 left-4 text-sm font-semibold text-gray-700">
+          亲爱的橘宝
+        </div>
+        
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-5 mt-2">
+          <i class="fa fa-heart text-xl"></i>
+        </div>
+        
+        <p class="text-gray-700 mb-6 text-lg text-center popup-message">
+          关心的话会在这里显示
+        </p>
+        
+        <button class="next-popup w-full bg-current hover:opacity-90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300">
+          收到啦 ❤️
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <!-- 最终大弹窗模板 -->
+  <template id="finalPopupTemplate">
+    <div class="final-care-popup fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 transition-opacity duration-400">
+      <div class="bg-white rounded-2xl shadow-2xl final-popup w-full mx-4 popup-enter relative">
+        <!-- 左上角标题 -->
+        <div class="absolute top-6 left-6 text-base font-semibold text-gray-700">
+          亲爱的橘宝
+        </div>
+        
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full mb-8 mt-4 bg-pink/10">
+          <i class="fa fa-heart text-3xl text-pink"></i>
+        </div>
+        
+        <p class="text-pink mb-8 text-center popup-message final-popup-text font-bold">
+          ❤️老婆要亲亲😍
+        </p>
+        
+        <button class="final-popup-btn w-full bg-pink hover:bg-pink/90 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 btn-pulse">
+          ❤️亲亲😘
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // 获取DOM元素
+    const firstPage = document.getElementById('firstPage');
+    const secondPage = document.getElementById('secondPage');
+    const thirdPage = document.getElementById('thirdPage');
+    const fourthPage = document.getElementById('fourthPage');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const backBtn = document.getElementById('backBtn');
+    const finalBtn = document.getElementById('finalBtn');
+    const surpriseBtn = document.getElementById('surpriseBtn');
+    const popupTemplate = document.getElementById('popupTemplate');
+    const finalPopupTemplate = document.getElementById('finalPopupTemplate');
+    
+    // 跟踪第二页按钮点击次数
+    let secondPageClickCount = 0;
+    // 当前显示的弹窗索引
+    let currentPopupIndex = 0;
+    // 所有弹窗的内容
+    const popupMessages = [
+      "老婆记得喝水",
+      "老婆要好好吃饭",
+      "老婆注意通风",
+      "老婆多多休息",
+      "老婆天天开心❤️"
+    ];
+    // 弹窗颜色数组
+    const popupColors = [
+      '#3B82F6', '#10B981', '#EF4444', '#F97316', '#8B5CF6'
+    ];
+    
+    // 创建下落的爱心
+    function createHearts() {
+      document.querySelectorAll('.heart').forEach(heart => heart.remove());
+      
+      const heartCount = 20;
+      const spacing = 100 / (heartCount / 2);
+      
+      for (let i = 0; i < heartCount; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'heart text-heart';
+        heart.innerHTML = '<i class="fa fa-heart"></i>';
+        
+        const size = Math.random() * 18 + 14;
+        heart.style.fontSize = `${size}px`;
+        
+        const basePos = (i % (heartCount/2)) * spacing;
+        const randomOffset = (Math.random() * spacing) - spacing/2;
+        const left = Math.max(5, Math.min(95, basePos + randomOffset));
+        heart.style.left = `${left}%`;
+        
+        heart.style.top = `-${size * 2}px`;
+        
+        const duration = Math.random() * 4 + 4;
+        heart.style.animationDuration = `${duration}s`;
+        
+        const delay = (i / heartCount) * 3;
+        heart.style.animationDelay = `${delay + Math.random() * 1.5}s`;
+        
+        firstPage.appendChild(heart);
+      }
+    }
+    
+    // 显示指定索引的弹窗
+    function showPopup(index) {
+      if (index >= popupMessages.length) {
+        // 所有关心弹窗显示完毕，显示最终大弹窗
+        showFinalPopup();
+        return;
+      }
+      
+      // 移除现有弹窗
+      document.querySelectorAll('.care-popup, .final-care-popup').forEach(popup => popup.remove());
+      
+      // 克隆弹窗模板
+      const popupClone = document.importNode(popupTemplate.content, true);
+      const popup = popupClone.querySelector('.care-popup');
+      const popupContent = popupClone.querySelector('.rounded-xl');
+      const iconContainer = popupClone.querySelector('.inline-flex');
+      const icon = popupClone.querySelector('.fa-heart');
+      const messageElement = popupClone.querySelector('.popup-message');
+      const nextBtn = popupClone.querySelector('.next-popup');
+      
+      // 设置当前弹窗的颜色
+      const color = popupColors[index % popupColors.length];
+      popupContent.style.boxShadow = `0 6px 20px -4px ${color}44`;
+      iconContainer.style.backgroundColor = `${color}10`;
+      icon.style.color = color;
+      nextBtn.style.backgroundColor = color;
+      
+      // 设置弹窗消息
+      messageElement.textContent = popupMessages[index];
+      
+      // 添加到页面
+      document.body.appendChild(popupClone);
+      
+      // 显示弹窗背景
+      setTimeout(() => {
+        popup.style.opacity = '1';
+      }, 10);
+      
+      // 触发弹窗进入动画
+      setTimeout(() => {
+        popupContent.classList.add('popup-enter-active');
+      }, 50);
+      
+      // 绑定下一个弹窗按钮事件
+      nextBtn.addEventListener('click', () => {
+        // 添加入场动画
+        popupContent.classList.remove('popup-enter-active');
+        popupContent.classList.add('popup-exit-active');
+        
+        // 淡出背景
+        setTimeout(() => {
+          popup.style.opacity = '0';
+        }, 150);
+        
+        // 显示下一个弹窗
+        setTimeout(() => {
+          currentPopupIndex++;
+          showPopup(currentPopupIndex);
+        }, 300);
+      });
+    }
+    
+    // 显示最终大弹窗
+    function showFinalPopup() {
+      // 移除现有弹窗
+      document.querySelectorAll('.care-popup, .final-care-popup').forEach(popup => popup.remove());
+      
+      // 克隆最终弹窗模板
+      const popupClone = document.importNode(finalPopupTemplate.content, true);
+      const popup = popupClone.querySelector('.final-care-popup');
+      const popupContent = popupClone.querySelector('.rounded-2xl');
+      const nextBtn = popupClone.querySelector('.final-popup-btn');
+      
+      // 添加到页面
+      document.body.appendChild(popupClone);
+      
+      // 显示弹窗背景
+      setTimeout(() => {
+        popup.style.opacity = '1';
+      }, 10);
+      
+      // 触发弹窗进入动画（更慢的动画效果，突出重要性）
+      setTimeout(() => {
+        popupContent.classList.add('popup-enter-active');
+      }, 50);
+      
+      // 绑定最终弹窗按钮事件
+      nextBtn.addEventListener('click', () => {
+        // 添加入场动画
+        popupContent.classList.remove('popup-enter-active');
+        popupContent.classList.add('popup-exit-active');
+        
+        // 淡出背景
+        setTimeout(() => {
+          popup.style.opacity = '0';
+        }, 150);
+        
+        // 所有弹窗完成，返回第一页
+        setTimeout(() => {
+          fourthPage.classList.remove('page-enter-active');
+          fourthPage.classList.add('page-exit', 'page-exit-active');
+          
+          setTimeout(() => {
+            fourthPage.classList.add('hidden');
+            firstPage.classList.remove('hidden', 'page-exit', 'page-exit-active');
+            createHearts();
+            currentPopupIndex = 0;
+          }, 500);
+        }, 300);
+      });
+    }
+    
+    // 开始显示弹窗序列
+    function startPopupSequence() {
+      // 隐藏第四页内容
+      const fourthContent = fourthPage.querySelector('.max-w-2xl');
+      fourthContent.style.transition = 'opacity 0.5s ease';
+      fourthContent.style.opacity = '0';
+      
+      // 开始显示第一个弹窗
+      setTimeout(() => {
+        currentPopupIndex = 0;
+        showPopup(currentPopupIndex);
+      }, 500);
+    }
+    
+    // 页面切换函数
+    function goToSecondPage() {
+      if (firstPage.classList.contains('hidden')) return;
+      
+      firstPage.classList.add('page-exit', 'page-exit-active');
+      
+      setTimeout(() => {
+        firstPage.classList.add('hidden');
+        secondPage.classList.remove('hidden');
+        
+        // 重置第二页按钮状态
+        secondPageClickCount = 0;
+        backBtn.textContent = '现在回去亲';
+        backBtn.classList.remove('btn-pulse', 'bg-orange', 'hover:bg-orange/90');
+        backBtn.classList.add('bg-heart', 'hover:bg-heart/90');
+        
+        secondPage.classList.add('page-enter');
+        setTimeout(() => {
+          secondPage.classList.remove('page-enter');
+          secondPage.classList.add('page-enter-active');
+        }, 10);
+      }, 500);
+    }
+    
+    function goToThirdPage() {
+      if (secondPage.classList.contains('hidden')) return;
+      
+      secondPage.classList.remove('page-enter-active');
+      secondPage.classList.add('page-exit', 'page-exit-active');
+      
+      setTimeout(() => {
+        secondPage.classList.add('hidden');
+        thirdPage.classList.remove('hidden');
+        
+        thirdPage.classList.add('page-enter');
+        setTimeout(() => {
+          thirdPage.classList.remove('page-enter');
+          thirdPage.classList.add('page-enter-active');
+        }, 10);
+      }, 500);
+    }
+    
+    function goToFourthPage() {
+      if (thirdPage.classList.contains('hidden')) return;
+      
+      thirdPage.classList.remove('page-enter-active');
+      thirdPage.classList.add('page-exit', 'page-exit-active');
+      
+      setTimeout(() => {
+        thirdPage.classList.add('hidden');
+        fourthPage.classList.remove('hidden');
+        
+        fourthPage.classList.add('page-enter');
+        setTimeout(() => {
+          fourthPage.classList.remove('page-enter');
+          fourthPage.classList.add('page-enter-active');
+        }, 10);
+      }, 500);
+    }
+    
+    // 绑定按钮点击事件
+    confirmBtn.addEventListener('click', goToSecondPage);
+    
+    backBtn.addEventListener('click', () => {
+      secondPageClickCount++;
+      
+      if (secondPageClickCount === 1) {
+        // 第一次点击：只更改文字，不跳转
+        backBtn.textContent = '真的好好亲了？🙄';
+        backBtn.classList.add('btn-pulse');
+      } else if (secondPageClickCount === 2) {
+        // 第二次点击：跳转到第三页
+        goToThirdPage();
+      }
+    });
+    
+    finalBtn.addEventListener('click', goToFourthPage);
+    surpriseBtn.addEventListener('click', startPopupSequence);
+    
+    // 页面加载时初始化
+    window.addEventListener('load', () => {
+      firstPage.classList.add('animate-fade-in');
+      createHearts();
+    });
+  </script>
+</body>
+</html>
